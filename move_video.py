@@ -9,7 +9,7 @@ class MoveVHSVideo:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "video_info": ("VHS_VIDEOINFO",),
+                "filenames": ("VHS_FILENAMES",),
                 "destination_path": ("STRING", {"default": "./moved_videos", "multiline": False}),
             },
         }
@@ -19,7 +19,7 @@ class MoveVHSVideo:
     OUTPUT_NODE = True
     CATEGORY = "utils"
 
-    def move_files(self, video_info, destination_path):
+    def move_files(self, filenames, destination_path):
         # Resolve path relative to CWD if it's not absolute
         dest_dir = os.path.abspath(destination_path)
 
@@ -31,11 +31,17 @@ class MoveVHSVideo:
                 print(f"Error creating directory {dest_dir}: {e}")
                 return ()
 
-        # VHS_VIDEOINFO is typically a dict containing 'filenames'
-        # It usually looks like: {"filenames": ["/path/to/video.mp4"], ...}
-        filenames = video_info.get('filenames', [])
+        # Handle different potential input structures for VHS_FILENAMES
+        file_list = []
+        if isinstance(filenames, dict) and 'filenames' in filenames:
+            file_list = filenames['filenames']
+        elif isinstance(filenames, (list, tuple)):
+            file_list = filenames
+        else:
+            print(f"Unexpected input type for filenames: {type(filenames)}")
+            return ()
         
-        for file_path in filenames:
+        for file_path in file_list:
             if os.path.exists(file_path):
                 file_name = os.path.basename(file_path)
                 new_path = os.path.join(dest_dir, file_name)
